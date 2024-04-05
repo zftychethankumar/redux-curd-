@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react'
 import UserApi from '../API/UserApi'
 import { toast } from 'react-toastify'
 import { NavLink } from 'react-router-dom'
-import { current } from '@reduxjs/toolkit'
+
 import ReactPaginate from 'react-paginate'
 
 function Home() {
@@ -16,6 +16,13 @@ function Home() {
   
   //current active 
  const currentUsers = users.slice(index, endIndex)
+
+ //page item handler
+ const pageItemHandler = (e) => {
+  console.log(`selected item =`, e.selected) //page item index
+  let newIndex = (e.selected  * itemsPerPage) % users.length
+  setIndex(newIndex)
+ }
   const readHandler = async () => {
     await UserApi.readAll().then(res => {
       console.log(`data =` ,res )
@@ -27,7 +34,19 @@ function Home() {
   }
   useEffect(() => {
     readHandler()
-  },[])
+  },[users])
+
+  //delete
+  const deleteHandler = async (id) => {
+    if(window.confirm(`Are you sure to delete user id?`)){
+    await UserApi.deleteUser(id)
+    .then(res => {
+      toast.success(res.data.msg)
+    }).catch(err =>  toast.error(err.response.data.msg))
+    } else {
+      toast.warning(`delete terminated`)
+    }
+  }
 
   return (
    <div className="container">
@@ -64,7 +83,7 @@ function Home() {
                       <NavLink to={`/edit/${item._id}`} className="btn btn-sm btn-info" title='Edit'>
                         <i className="bi bi-pencil"></i>
                       </NavLink>
-                      <NavLink className="btn btn-sm btn-danger" title='Delete'>
+                      <NavLink onClick={() => deleteHandler(item._id)} className="btn btn-sm btn-danger" title='Delete'>
                         <i className="bi bi-trash"></i>
                       </NavLink>
                      </td>
@@ -74,7 +93,25 @@ function Home() {
               }
             </tbody>
             <tfoot>
-              <ReactPaginate pageCount={pCount}/>
+            <tr>
+                  <th colSpan={6}>
+                  <ReactPaginate
+                 pageCount={pCount} 
+                 onPageChange={pageItemHandler}
+                 className='pagination justify-content-center'
+                 pageClassName='page-item'
+                 pageLinkClassName='page-link'
+                 nextClassName='page-item'
+                 nextLinkClassName='page-link'
+                 previousClassName='page-item'
+                 previousLinkClassName='page-link'
+                 activeClassName='active'
+                 activeLinkClassName='active'
+                 breakLabel="..."
+                 pageRangeDisplayed={3}
+                 />
+                  </th>
+                </tr>
             </tfoot>
           </table>
         </div>
